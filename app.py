@@ -19,7 +19,7 @@ app = Flask(__name__)
 def format_response(response_text):
     # Check if response_text is a string and wrap it in HTML
     if isinstance(response_text, str):
-        return f"<div><p>{response_text.replace('*', '<strong>').replace('\\n', '</p><p>')}</p></div>"
+        return f"<div><p>{response_text.replace('*', '<strong>').replace('\n', '</p><p>')}</p></div>"
 
     formatted_response = "<div>"
 
