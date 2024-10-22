@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from PIL import Image
 from io import BytesIO
 import base64
+from werkzeug.utils import url_quote
 
 # Load environment variables from .env
 load_dotenv()
