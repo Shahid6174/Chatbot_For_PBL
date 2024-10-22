@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Q&A and Image Demo</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        function handleVoiceInput() {
+            const inputMethod = document.getElementById('input_method').value;
+            const messageDiv = document.getElementById('message');
+
+            if (inputMethod === 'Voice Input') {
+                messageDiv.innerHTML = 'Listening...';
+                // Simulate the speech recognition delay for demonstration
+                setTimeout(() => {
+                    messageDiv.innerHTML = 'Recognizing...';
+                    // You might want to trigger the form submission here instead
+                    document.getElementById('questionForm').submit(); // submit the form
+                }, 2000); // adjust time as needed
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Gemini Application</h1>
+
+        <form id="questionForm" method="POST" enctype="multipart/form-data" onsubmit="handleVoiceInput()">
+            <label for="input_method">Choose input method:</label>
+            <select name="input_method" id="input_method">
+                <option value="Text Input">Text Input</option>
+                <option value="Voice Input">Voice Input</option>
+            </select><br><br>
+
+            <label for="input_text">Input:</label>
+            <input type="text" name="input_text" id="input_text"><br><br>
+
+            <label for="image">Choose an image (optional):</label>
+            <input type="file" name="image" id="image" accept="image/jpeg, image/png"><br><br>
+
+            <button type="submit">Ask the question</button>
+        </form>
+
+        <div id="message" style="margin-top: 20px; font-weight: bold;"></div>
+
+        {% if image_base64 %}
+            <h3>The image has been successfully uploaded</h3>
+        {% endif %}
+
+        {% if response %}
+            <h3>The Response is:</h3>
+            <p>{{ response }}</p>
+        {% endif %}
+    </div>
+</body>
+</html>
