@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini Q&A and Image Demo</title>
+    <title>Gemini Student Q&A App</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-color: #f0f8ff; /* Soft background for students */
             color: #333;
             line-height: 1.6;
         }
@@ -23,6 +23,7 @@
         h1 {
             text-align: center;
             color: #007BFF;
+            font-size: 2em;
         }
         label {
             display: block;
@@ -62,75 +63,92 @@
             border-radius: 5px;
             white-space: pre-wrap;
         }
-        ul {
-            list-style-type: disc;
-            margin-left: 20px;
-        }
         .button-group {
             display: flex;
             justify-content: space-between;
+        }
+        .alert {
+            color: red;
+            font-weight: bold;
         }
     </style>
     <script>
         function handleVoiceInput(event) {
             const inputMethod = document.getElementById('input_method').value;
             const messageDiv = document.getElementById('message');
+            const explicitWords = ["badword1", "badword2", "badword3"];  // Replace with actual explicit words to block
 
-            if (inputMethod === 'Voice Input') {
-                if ('webkitSpeechRecognition' in window) {
-                    const recognition = new webkitSpeechRecognition();
-                    recognition.lang = 'en-US';
-                    recognition.interimResults = false;
-                    recognition.maxAlternatives = 1;
+            try {
+                if (inputMethod === 'Voice Input') {
+                    if ('webkitSpeechRecognition' in window) {
+                        const recognition = new webkitSpeechRecognition();
+                        recognition.lang = 'en-US';
+                        recognition.interimResults = false;
+                        recognition.maxAlternatives = 1;
 
-                    messageDiv.innerHTML = 'Listening...';
+                        messageDiv.innerHTML = 'Listening...';
 
-                    recognition.start();
+                        recognition.start();
 
-                    recognition.onresult = function(event) {
-                        const transcript = event.results[0][0].transcript;
-                        messageDiv.innerHTML = 'Recognized: ' + transcript;
+                        recognition.onresult = function(event) {
+                            const transcript = event.results[0][0].transcript.toLowerCase();
+                            messageDiv.innerHTML = 'Recognized: ' + transcript;
 
-                        fetch("/", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/x-www-form-urlencoded",
-                            },
-                            body: `input_method=Voice Input&input_text=${encodeURIComponent(transcript)}`
-                        }).then(response => response.text())
-                        .then(html => {
-                            document.body.innerHTML = html;
-                        }).catch(error => {
-                            console.error('Error:', error);
-                        });
-                    };
+                            // Check for explicit language
+                            const containsExplicit = explicitWords.some(word => transcript.includes(word));
+                            if (containsExplicit) {
+                                alert('Your query contains inappropriate language and cannot be processed.');
+                                clearResponse();
+                                return;
+                            }
 
-                    recognition.onspeechend = function() {
-                        recognition.stop();
-                        messageDiv.innerHTML = 'Recognition stopped.';
-                    };
+                            // Send the clean text to the server
+                            fetch("/", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/x-www-form-urlencoded",
+                                },
+                                body: `input_method=Voice Input&input_text=${encodeURIComponent(transcript)}`
+                            }).then(response => response.text())
+                            .then(html => {
+                                document.body.innerHTML = html;
+                            }).catch(error => {
+                                console.error('Error:', error);
+                            });
+                        };
 
-                    recognition.onerror = function(event) {
-                        messageDiv.innerHTML = 'Error occurred in recognition: ' + event.error;
-                    };
+                        recognition.onspeechend = function() {
+                            recognition.stop();
+                            messageDiv.innerHTML = 'Recognition stopped.';
+                        };
 
-                    event.preventDefault();
-                } else {
-                    messageDiv.innerHTML = 'Speech Recognition API not supported in this browser.';
+                        recognition.onerror = function(event) {
+                            messageDiv.innerHTML = 'Error occurred in recognition: ' + event.error;
+                        };
+
+                        event.preventDefault();
+                    } else {
+                        messageDiv.innerHTML = 'Speech Recognition API not supported in this browser.';
+                    }
                 }
+            } catch (error) {
+                alert("An error occurred: " + error.message);
             }
         }
 
         function clearResponse() {
             document.getElementById('input_text').value = '';
             document.getElementById('message').innerHTML = '';
-            document.querySelector('.response').innerHTML = '';
+            const responseDiv = document.querySelector('.response');
+            if (responseDiv) {
+                responseDiv.innerHTML = '';
+            }
         }
     </script>
 </head>
 <body>
     <div class="container">
-        <h1>Gemini Application</h1>
+        <h1>Gemini Student Q&A App</h1>
 
         <form id="questionForm" method="POST" enctype="multipart/form-data" onsubmit="handleVoiceInput(event)">
             <label for="input_method">Choose input method:</label>

@@ -46,19 +46,32 @@ def format_response(response_text):
 
 # Function to load the appropriate Gemini model and get responses
 def get_gemini_response(question, image=None):
-    if image:
-        # Use gemini-1.5-flash when an image is provided
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content([question, image] if question else image)
-    else:
-        # Use gemini-pro for text-only input
-        model = genai.GenerativeModel('gemini-pro')
-        response = model.generate_content(question)
+    try:
+        if image:
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            response = model.generate_content([question, image] if question else image)
+        else:
+            model = genai.GenerativeModel('gemini-pro')
+            response = model.generate_content(question)
 
-    # Format the response as HTML
-    formatted_response = format_response(response.text)
-    
-    return formatted_response
+        # Check for safety ratings in the response
+        safety_ratings = response.safety_ratings if hasattr(response, 'safety_ratings') else []
+        error_messages = []
+
+        for rating in safety_ratings:
+            if rating.category in ['HARM_CATEGORY_SEXUALLY_EXPLICIT', 'HARM_CATEGORY_HATE_SPEECH', 'HARM_CATEGORY_HARASSMENT']:
+                error_messages.append(f"Inappropriate content detected: {rating.category}")
+
+        # Raise error if inappropriate content is detected
+        if error_messages:
+            return "Your query could not be processed due to inappropriate content."
+
+        # Format the response as HTML
+        formatted_response = format_response(response.text)
+        return formatted_response
+
+    except Exception as e:
+        return f"An error occurred: {str(e)}"
 
 # Speech recognition function
 def recognize_speech_from_mic():
